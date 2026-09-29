@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>動くうめこ実験場</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    background:linear-gradient(180deg,#fff8fb,#fff1e8);
+    touch-action:manipulation;
+    user-select:none;
+  }
+  .stage{position:relative;width:100%;height:100dvh;overflow:hidden}
+  h1{
+    position:absolute;top:max(22px,env(safe-area-inset-top));left:0;right:0;
+    margin:0;text-align:center;font-size:clamp(23px,6vw,34px);z-index:5;
+  }
+  #message{
+    position:absolute;top:calc(max(22px,env(safe-area-inset-top)) + 50px);
+    left:20px;right:20px;text-align:center;font-weight:800;color:#555;z-index:5;
+  }
+  #umeko{
+    position:absolute;
+    width:min(56vw,300px);
+    height:auto;
+    left:-75vw;
+    bottom:max(38px,env(safe-area-inset-bottom));
+    transform-origin:50% 100%;
+    filter:drop-shadow(0 14px 12px rgba(0,0,0,.16));
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* 登場 */
+  #umeko.enter{animation:enter 2.2s cubic-bezier(.2,.8,.25,1) forwards}
+  @keyframes enter{
+    0%{left:-75vw;transform:translateY(0) rotate(-5deg)}
+    15%{transform:translateY(-10px) rotate(5deg)}
+    30%{transform:translateY(0) rotate(-5deg)}
+    45%{transform:translateY(-10px) rotate(5deg)}
+    60%{transform:translateY(0) rotate(-4deg)}
+    75%{transform:translateY(-8px) rotate(4deg)}
+    100%{left:50%;transform:translateX(-50%) translateY(0) rotate(0)}
+  }
+
+  /* 待機ゆらゆら */
+  #umeko.idle{
+    left:50%;transform:translateX(-50%);
+    animation:idle 1.8s ease-in-out infinite;
+  }
+  @keyframes idle{
+    0%,100%{transform:translateX(-50%) translateY(0) rotate(-1.5deg)}
+    50%{transform:translateX(-50%) translateY(-9px) rotate(1.5deg)}
+  }
+
+  /* ビクッ */
+  #umeko.shock{
+    left:50%;
+    animation:shock .55s ease-out;
+  }
+  @keyframes shock{
+    0%,100%{transform:translateX(-50%) translateY(0)}
+    18%{transform:translateX(calc(-50% - 13px)) translateY(-8px) rotate(-5deg) scale(1.04)}
+    38%{transform:translateX(calc(-50% + 13px)) rotate(5deg)}
+    58%{transform:translateX(calc(-50% - 8px)) rotate(-3deg)}
+    78%{transform:translateX(calc(-50% + 5px)) rotate(2deg)}
+  }
+
+  /* ジャンプ */
+  #umeko.jump{
+    left:50%;
+    animation:jump .9s cubic-bezier(.25,.75,.35,1);
+  }
+  @keyframes jump{
+    0%,100%{transform:translateX(-50%) translateY(0) scale(1)}
+    15%{transform:translateX(-50%) translateY(8px) scale(1.05,.93)}
+    48%{transform:translateX(-50%) translateY(-150px) rotate(5deg) scale(.97,1.05)}
+    72%{transform:translateX(-50%) translateY(0) scale(1.07,.9)}
+  }
+
+  /* 爆走退場 */
+  #umeko.run{
+    left:50%;
+    animation:runAway 1.35s cubic-bezier(.5,0,.9,.45) forwards;
+  }
+  @keyframes runAway{
+    0%{transform:translateX(-50%) rotate(0)}
+    12%{transform:translateX(-50%) rotate(-8deg)}
+    24%{transform:translateX(-45%) rotate(8deg)}
+    38%{transform:translateX(-35%) rotate(-8deg)}
+    52%{transform:translateX(-15%) rotate(8deg)}
+    100%{left:135%;transform:translateX(0) rotate(12deg)}
+  }
+
+  .hint{
+    position:absolute;bottom:max(10px,env(safe-area-inset-bottom));
+    width:100%;text-align:center;color:#777;font-size:13px;z-index:5;
+  }
+  .restart{
+    display:none;position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+    border:0;border-radius:999px;padding:15px 24px;font-size:17px;font-weight:900;
+    background:#fff;box-shadow:0 8px 25px rgba(0,0,0,.15);z-index:10;
+  }
+  .restart.show{display:block}
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>動くうめこ実験場</h1>
+  <div id="message">うめこ、出勤中……</div>
+  <img id="umeko" src="umeko.PNG" alt="うめこ">
+  <button id="restart" class="restart">もう一回🤣</button>
+  <div class="hint">うめこをタップしてな</div>
+</div>
+
+<script>
+const u = document.getElementById('umeko');
+const msg = document.getElementById('message');
+const restart = document.getElementById('restart');
+let step = 0;
+let locked = true;
+
+function idle(){
+  u.className='idle';
+  msg.textContent='来たで。タップしてみ🤣';
+  locked=false;
+}
+function start(){
+  step=0; locked=true; restart.classList.remove('show');
+  u.className='';
+  void u.offsetWidth;
+  u.className='enter';
+  msg.textContent='うめこ、出勤中……';
+  setTimeout(idle,2200);
+}
+function action(cls,text,duration,nextStep){
+  locked=true;
+  u.className=cls;
+  msg.textContent=text;
+  setTimeout(()=>{
+    step=nextStep;
+    if(cls==='run'){
+      msg.textContent='帰った🤣🤣🤣';
+      restart.classList.add('show');
+    } else {
+      idle();
+    }
+    locked=false;
+  },duration);
+}
+u.addEventListener('click',()=>{
+  if(locked) return;
+  if(step===0) action('shock','ビクッ！！🤣',550,1);
+  else if(step===1) action('jump','飛ぶんかーーい🤣',900,2);
+  else if(step===2) action('run','逃げたーーー！！🤣🤣🤣',1350,3);
+});
+restart.addEventListener('click',start);
+u.addEventListener('error',()=>{
+  msg.textContent='umeko.PNG が見つからへんで🤣 ファイル名を確認してな';
+});
+start();
+</script>
+</body>
+</html>
